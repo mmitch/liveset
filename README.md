@@ -7,6 +7,16 @@ except that all the $$$ hardware is replaced by Perl scripts ;-)
 
 Not much documentation here, everything is still being written.
 
+## Needed packages
+
+- `IO::Select`
+- `IPC::Open2`
+- `Linux::Inotify2`
+- `MIDI::ALSA`
+- `Moo`
+- `namespace::clean`
+- `Scalar::Util`
+
 ## Minimal working example
 
 1. Start the player using the provided examples:
