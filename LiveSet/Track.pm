@@ -93,20 +93,20 @@ sub log($self, @args) {
     printf "%16s: %s\n", $self->filename, join(' ', @args);
 }
 
-sub tick($self, $tick) {
+sub tick($self, $tick, $global) {
     my @events = $self->_inotify->read;
     if (@events) {
 	$self->_load_file;
     }
     if ($self->_initialized == STATE_INITIAL) {
-	$self->_initref->($self, $tick) if defined $self->_initref;
+	$self->_initref->($self, $tick, $global) if defined $self->_initref;
 	$self->_initialized( STATE_RELOADED );
     }
     if ($self->_initialized == STATE_RELOADED) {
-	$self->_reloadref->($self, $tick) if defined $self->_reloadref;
+	$self->_reloadref->($self, $tick, $global) if defined $self->_reloadref;
 	$self->_initialized( STATE_RUNNING );
     }
-    $self->_tickref->($self, $tick) if defined $self->_tickref;
+    $self->_tickref->($self, $tick, $global) if defined $self->_tickref;
     
 }
 

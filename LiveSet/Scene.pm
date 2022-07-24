@@ -51,6 +51,7 @@ sub run($self) {
 	outputs => $self->_connections,
 	);
 
+    my $global = {};
     $_->init() foreach @{$self->_tracks};
 
     my $ios = IO::Select->new;
@@ -62,7 +63,7 @@ sub run($self) {
 
     my $tick = 0;
     while (! $ios->can_read(0.01)) {
-	$_->tick($tick) foreach @{$self->_tracks};
+	$_->tick($tick, $global) foreach @{$self->_tracks};
 	$client->queue_callback($tick);
     
 	$tick++;
