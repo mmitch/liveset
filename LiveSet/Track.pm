@@ -5,7 +5,12 @@ use Linux::Inotify2;
 
 use LiveSet::Midi;
 
-use constant TEMPO => 0.125;  # sec per tick
+use constant {
+    TEMPO => 0.125,  # sec per tick
+    STATE_INITIAL  => 0,
+    STATE_RELOADED => 1,
+    STATE_RUNNING  => 2,
+};
 
 use Moo;
 use strictures 2;
@@ -48,6 +53,10 @@ has _initref => (
     is => 'rw',
     );
 
+has _reloadref => (
+    is => 'rw',
+    );
+
 has _tickref => (
     is => 'rw',
     );
@@ -62,6 +71,7 @@ has _midi => (
 
 has _initialized => (
     is => 'rw',
+    default => sub { return STATE_INITIAL; },
     );
 
 sub _build__inotify($self) {
@@ -88,9 +98,13 @@ sub tick($self, $tick) {
     if (@events) {
 	$self->_load_file;
     }
-    unless ($self->_initialized) {
+    if ($self->_initialized == STATE_INITIAL) {
 	$self->_initref->($self, $tick) if defined $self->_initref;
-	$self->_initialized( 1 );
+	$self->_initialized( STATE_RELOADED );
+    }
+    if ($self->_initialized == STATE_RELOADED) {
+	$self->_reloadref->($self, $tick) if defined $self->_reloadref;
+	$self->_initialized( STATE_RUNNING );
     }
     $self->_tickref->($self, $tick) if defined $self->_tickref;
     
@@ -124,10 +138,11 @@ sub _load_file($self) {
 	return;
     }
     
-    $self->_initref( $hash->{INIT} );
-    $self->_tickref( $hash->{TICK} );
+    $self->_initref(   $hash->{ON_INIT} );
+    $self->_reloadref( $hash->{ON_RELOAD} );
+    $self->_tickref(   $hash->{ON_TICK} );
 
-    $self->_initialized( 0 );
+    $self->_initialized( STATE_RELOADED ) unless $self->_initialized == STATE_INITIAL;
 
     print "$filename loaded\n";
 }

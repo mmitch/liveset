@@ -26,13 +26,8 @@ has name => (
     },
     );
 
-has _connections => (
-    is => 'lazy',
-    );
-
-has _tracks => (
-    is => 'lazy',
-    );
+has _connections => ( is => 'lazy' );
+has _tracks =>      ( is => 'lazy' );
 
 sub _build__connections($self) { return [] }
 sub _build__tracks($self)      { return [] }
