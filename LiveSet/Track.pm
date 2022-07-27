@@ -74,6 +74,10 @@ has _initialized => (
     default => sub { return STATE_INITIAL; },
     );
 
+has _watcher => (
+    is => 'rw',
+    );
+
 sub _build__inotify($self) {
     my $inotify = Linux::Inotify2->new or die "can't create inotify object: $!";
     $inotify->blocking(0);
@@ -85,8 +89,33 @@ sub _build__midi($self) {
 }
 
 sub init($self) {
-    $self->_inotify->watch($self->filename, IN_MODIFY | IN_CLOSE_WRITE) or die "can't create watch for ".${self}->{filename}.": $!";
+    $self->_watch_file;
     $self->_load_file;
+}
+
+sub _watch_file($self) {
+    my $watcher = $self->_watcher;
+    if ($watcher) {
+	$watcher->cancel;
+    }
+
+    $watcher = $self->_inotify->watch($self->filename, IN_MODIFY | IN_CLOSE_WRITE | IN_MOVE_SELF)
+	or die "can't create watch for ".${self}->{filename}.": $!";
+
+    $self->_watcher($watcher);
+}
+
+sub _handle_inotify($self) {
+    my @events = $self->_inotify->read;
+    my @moved  = grep { $_->IN_MOVE_SELF } @events;
+
+    if (@moved) {
+	# file was renamed/moved, reinit watch with original filename
+	$self->_watch_file;
+    }
+    if (@events) {
+	$self->_load_file;
+    }
 }
 
 sub log($self, @args) {
@@ -94,10 +123,7 @@ sub log($self, @args) {
 }
 
 sub tick($self, $tick, $global) {
-    my @events = $self->_inotify->read;
-    if (@events) {
-	$self->_load_file;
-    }
+    $self->_handle_inotify;
     if ($self->_initialized == STATE_INITIAL) {
 	$self->_initref->($self, $tick, $global) if defined $self->_initref;
 	$self->_initialized( STATE_RELOADED );
