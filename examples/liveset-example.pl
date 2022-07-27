@@ -11,10 +11,11 @@ my $ls = LiveSet::Scene->new( name => 'liveset-example');
 
 ### SET UP MIDI DEVICES
 #
-my $midi        = $ls->add_connection('Timidity:0');
-#                                      ^^^^^^^^^^^^ change this to your needs!
+my $midi        = $ls->add_connection('TiMidity');
+#                                      ^^^^^^^^ change this to your needs!
 #                                      - must be an ALSA MIDI output port
 #                                      - you can use multiple connections in parallel
+#                                      - if you want to use timidity, run it with -iA
 
 ### SET UP TRACKS
 #
